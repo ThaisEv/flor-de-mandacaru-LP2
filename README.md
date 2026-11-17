@@ -104,7 +104,7 @@ flor-de-mandacaru/
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/<usuario>/flor-de-mandacaru.git
+git clone https://github.com/ThaisEv/flor-de-mandacaru-LP2.git
 cd flor-de-mandacaru
 
 # 2. Crie o banco no PostgreSQL
