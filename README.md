@@ -26,7 +26,9 @@ Alegre sem ser infantil, sofisticada sem ser distante, regional sem ser folclór
 
 ---
 
-## 🎨 Identidade visual (resumo para quem vai codar)
+## 🎨 Identidade visual
+
+**Projeto no Figma:** [Link do Figma](https://www.figma.com/design/1WbOFdXwFkcVwRQJPeCWlh/projeto-LP2?node-id=21-8&t=KGttPTTRuzxkaipR-1)
 
 **Paleta principal**
 
