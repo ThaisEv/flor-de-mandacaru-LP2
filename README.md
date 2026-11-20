@@ -127,18 +127,16 @@ cd backend
 ## ✅ Checklist de criação do site
 
 ### 1. Planejamento e base
-- [ ] Criar o documento da idealização da marca e Checkpoints (`docs/`)
-- [ ] Definir o escopo do MVP, priorizando o que a disciplina exige
-- [ ] Criar o repositório no GitHub e o `.gitignore`
+- [x] Criar o documento da idealização da marca e Checkpoints (`docs/`)
+- [x] Criar o repositório no GitHub e o `.gitignore`
 - [x] Escrever o README inicial
 
 ### 2. Identidade visual e design
-- [ ] Definir tokens de design (cores da paleta, tipografia, espaçamentos)
-- [ ] Escolher tipografia com personalidade (elegante, legível e acolhedora)
-- [ ] Criar logotipo e símbolo (reconhecíveis também em tamanhos pequenos)
-- [ ] Prototipar as telas principais (Figma ou similar)
-- [ ] Definir direção fotográfica e banco de imagens próprio
-- [ ] Validar o protótipo com o time
+- [x] Definir tokens de design (cores da paleta, tipografia, espaçamentos)
+- [x] Escolher tipografia com personalidade (elegante, legível e acolhedora)
+- [x] Criar logotipo e símbolo (reconhecíveis também em tamanhos pequenos)
+- [x] Prototipar as telas principais (Figma ou similar) // Inicio pronto
+- [x] Definir direção fotográfica e banco de imagens próprio
 
 ### 3. Modelagem de dados
 - [ ] Levantar requisitos funcionais e não funcionais
