@@ -1,0 +1,222 @@
+
+@startuml
+!theme plain
+
+title Flor de Mandacaru
+title Modelo Entidade-Relacionamento (DER)
+
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+
+skinparam entity {
+    BorderColor #A65D45
+    FontColor #49352D
+    BackgroundColor #FFF8F0
+}
+
+skinparam package {
+    BorderColor #A65D45
+    FontColor #49352D
+    BackgroundColor #FFFDFC
+}
+
+' =================================================
+' 1. CLIENTES E ENDEREÇOS
+' =================================================
+
+package "01 - CLIENTES E ENDEREÇOS" #F8EDE5 {
+
+    entity "CLIENTE" as CLIENTE {
+        * id : BIGINT <<PK>>
+        --
+        nome : VARCHAR(120)
+        email : VARCHAR(150) <<UK>>
+        senha_hash : VARCHAR(255)
+        telefone : VARCHAR(20)
+    }
+
+    entity "ENDERECO" as ENDERECO {
+        * id : BIGINT <<PK>>
+        --
+        cliente_id : BIGINT <<FK>>
+        cep : VARCHAR(9)
+        logradouro : VARCHAR(150)
+        numero : VARCHAR(20)
+        complemento : VARCHAR(100)
+        bairro : VARCHAR(100)
+        cidade : VARCHAR(100)
+        estado : CHAR(2)
+    }
+
+    CLIENTE ||--o{ ENDERECO : possui
+}
+
+' =================================================
+' 2. CATÁLOGO E PRODUTOS
+' =================================================
+
+package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
+
+    entity "PRODUTO" as PRODUTO {
+        * id : BIGINT <<PK>>
+        --
+        nome : VARCHAR(120)
+        descricao : TEXT
+        preco : DECIMAL(10,2)
+        quantidade_estoque : INTEGER
+        ativo : BOOLEAN
+    }
+
+    entity "PLANTA" as PLANTA {
+        * produto_id : BIGINT <<PK, FK>>
+        --
+        nome_cientifico : VARCHAR(150)
+        necessidade_agua : VARCHAR(100)
+        luminosidade : VARCHAR(100)
+        cuidados : TEXT
+        tipo_planta : VARCHAR(30)
+        cor_flor : VARCHAR(50)
+        epoca_floracao : VARCHAR(100)
+        tipo_folhagem : VARCHAR(100)
+    }
+
+    entity "FLOR" as FLOR {
+        * produto_id : BIGINT <<PK, FK>>
+        --
+        cor : VARCHAR(50)
+        especie : VARCHAR(100)
+        durabilidade : INTEGER
+    }
+
+    entity "ORNAMENTACAO" as ORNAMENTACAO {
+        * produto_id : BIGINT <<PK, FK>>
+        --
+        tipo : VARCHAR(80)
+        material : VARCHAR(80)
+    }
+
+    entity "VASO" as VASO {
+        * produto_id : BIGINT <<PK, FK>>
+        --
+        material : VARCHAR(80)
+        altura : DECIMAL(8,2)
+        largura : DECIMAL(8,2)
+        cor : VARCHAR(50)
+    }
+
+    entity "BUQUE" as BUQUE {
+        * produto_id : BIGINT <<PK, FK>>
+        --
+        tamanho : VARCHAR(50)
+        estilo : VARCHAR(80)
+    }
+
+    entity "ARRANJO" as ARRANJO {
+        * produto_id : BIGINT <<PK, FK>>
+        --
+        estilo : VARCHAR(80)
+        tamanho : VARCHAR(50)
+    }
+
+    PRODUTO ||--o| PLANTA : especializa
+    PRODUTO ||--o| FLOR : especializa
+    PRODUTO ||--o| ORNAMENTACAO : especializa
+    PRODUTO ||--o| VASO : especializa
+    PRODUTO ||--o| BUQUE : especializa
+    PRODUTO ||--o| ARRANJO : especializa
+}
+
+' =================================================
+' 3. COMPOSIÇÃO DOS PRODUTOS
+' =================================================
+
+package "03 - COMPOSIÇÃO DOS PRODUTOS" #EAF0E5 {
+
+    entity "ITEM_COMPOSICAO" as ITEM_COMPOSICAO {
+        * id : BIGINT <<PK>>
+        --
+        produto_composicao_id : BIGINT <<FK>>
+        componente_id : BIGINT <<FK>>
+        quantidade : INTEGER
+    }
+
+    BUQUE ||--o{ ITEM_COMPOSICAO : possui
+    ARRANJO ||--o{ ITEM_COMPOSICAO : possui
+    PRODUTO ||--o{ ITEM_COMPOSICAO : componente
+}
+
+' =================================================
+' 4. CARRINHO DE COMPRAS
+' =================================================
+
+package "04 - CARRINHO DE COMPRAS" #E7EFF3 {
+
+    entity "CARRINHO" as CARRINHO {
+        * id : BIGINT <<PK>>
+        --
+        cliente_id : BIGINT <<FK, UK>>
+        data_criacao : TIMESTAMP
+    }
+
+    entity "ITEM_CARRINHO" as ITEM_CARRINHO {
+        * id : BIGINT <<PK>>
+        --
+        carrinho_id : BIGINT <<FK>>
+        produto_id : BIGINT <<FK>>
+        quantidade : INTEGER
+        preco_unitario : DECIMAL(10,2)
+    }
+
+    CLIENTE ||--o| CARRINHO : possui
+    CARRINHO ||--o{ ITEM_CARRINHO : contem
+    PRODUTO ||--o{ ITEM_CARRINHO : selecionado
+}
+
+' =================================================
+' 5. PEDIDOS E PAGAMENTOS
+' =================================================
+
+package "05 - PEDIDOS E PAGAMENTOS" #F3E9EE {
+
+    entity "PEDIDO" as PEDIDO {
+        * id : BIGINT <<PK>>
+        --
+        cliente_id : BIGINT <<FK>>
+        endereco_id : BIGINT <<FK>>
+        data_pedido : TIMESTAMP
+        status : VARCHAR(30)
+        valor_total : DECIMAL(10,2)
+    }
+
+    entity "ITEM_PEDIDO" as ITEM_PEDIDO {
+        * id : BIGINT <<PK>>
+        --
+        pedido_id : BIGINT <<FK>>
+        produto_id : BIGINT <<FK>>
+        quantidade : INTEGER
+        preco_unitario : DECIMAL(10,2)
+        subtotal : DECIMAL(10,2)
+    }
+
+    entity "PAGAMENTO" as PAGAMENTO {
+        * id : BIGINT <<PK>>
+        --
+        pedido_id : BIGINT <<FK>>
+        valor : DECIMAL(10,2)
+        metodo : VARCHAR(40)
+        status : VARCHAR(30)
+        data_pagamento : TIMESTAMP
+        codigo_transacao : VARCHAR(150)
+    }
+
+    CLIENTE ||--o{ PEDIDO : realiza
+    ENDERECO ||--o{ PEDIDO : utilizado
+    PEDIDO ||--|{ ITEM_PEDIDO : contem
+    PRODUTO ||--o{ ITEM_PEDIDO : vendido
+    PEDIDO ||--o{ PAGAMENTO : recebe
+}
+
+@enduml
