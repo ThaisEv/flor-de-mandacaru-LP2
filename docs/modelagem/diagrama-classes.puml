@@ -1,0 +1,310 @@
+
+@startuml
+!theme plain
+
+title Flor de Mandacaru
+title Diagrama de Classes
+
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+
+skinparam class {
+    BorderColor #A65D45
+    FontColor #49352D
+    BackgroundColor #FFF8F0
+    ArrowColor #A65D45
+}
+skinparam interface {
+    BorderColor #64845D
+    FontColor #38533A
+    BackgroundColor #EDF4E9
+}
+skinparam package {
+    BorderColor #A65D45
+    FontColor #49352D
+    BackgroundColor #FFFDFC
+}
+
+' ==========================================
+' 01 - CLIENTES E PERFIL
+' ==========================================
+
+package "01 - CLIENTES E PERFIL" #F8EDE5 {
+
+    class Cliente {
+        - id: Long
+        - nome: String
+        - email: String
+        - senhaHash: String
+        - telefone: String
+        --
+        + cadastrar(): void
+        + atualizarPerfil(): void
+        + alterarSenha(): void
+        + adicionarEndereco(endereco: Endereco): void
+        + removerEndereco(endereco: Endereco): void
+    }
+
+    class Endereco {
+        - id: Long
+        - cep: String
+        - logradouro: String
+        - numero: String
+        - complemento: String
+        - bairro: String
+        - cidade: String
+        - estado: String
+        --
+        + validar(): boolean
+    }
+
+    Cliente "1" *-- "0..*" Endereco : endereços
+}
+
+' ==========================================
+' 02 - CATÁLOGO E PRODUTOS
+' ==========================================
+
+package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
+
+    abstract class Produto {
+        - id: Long
+        - nome: String
+        - descricao: String
+        - preco: BigDecimal
+        - quantidadeEstoque: int
+        - ativo: boolean
+        --
+        + atualizarPreco(preco: BigDecimal): void
+        + atualizarEstoque(quantidade: int): void
+        + ativar(): void
+        + desativar(): void
+    }
+
+    class Planta {
+        - nomeCientifico: String
+        - necessidadeAgua: String
+        - luminosidade: String
+        - cuidados: String
+        - tipoPlanta: String
+        - possuiFlor: boolean
+        - corFlor: String
+        - epocaFloracao: String
+        - tipoFolhagem: String
+    }
+
+    class Vaso {
+        - material: String
+        - altura: BigDecimal
+        - largura: BigDecimal
+        - cor: String
+    }
+
+    class Buque {
+        - tamanho: String
+        - estilo: String
+        --
+        + adicionarComponente(produto: Produto, quantidade: int): void
+        + removerComponente(produto: Produto): void
+    }
+
+    class Arranjo {
+        - estilo: String
+        - tamanho: String
+        --
+        + adicionarComponente(produto: Produto, quantidade: int): void
+        + removerComponente(produto: Produto): void
+        + adicionarVaso(vaso: Vaso): void
+        + removerVaso(): void
+    }
+
+    class Papel {
+        - id: Long
+        - nome: String
+        - cor: String
+        - precoAdicional: BigDecimal
+        - ativo: boolean
+    }
+
+    class Laco {
+        - id: Long
+        - material: String
+        - cor: String
+        - precoAdicional: BigDecimal
+        - ativo: boolean
+    }
+
+    interface Componivel {
+        + adicionarComponente(produto: Produto, quantidade: int): void
+        + removerComponente(produto: Produto): void
+        + getComposicao(): List<ItemComposicao>
+    }
+
+    Produto <|-- Planta
+    Produto <|-- Vaso
+    Produto <|-- Buque
+    Produto <|-- Arranjo
+
+    Componivel <|.. Buque
+    Componivel <|.. Arranjo
+
+    Buque "0..*" --> "1" Papel : papel padrão
+    Buque "0..*" --> "1" Laco : laço padrão
+    Arranjo "0..*" --> "0..1" Vaso : vaso padrão
+}
+
+' ==========================================
+' 03 - COMPOSIÇÃO DOS PRODUTOS
+' ==========================================
+
+package "03 - COMPOSIÇÃO DOS PRODUTOS" #EAF0E5 {
+
+    class ItemComposicao {
+        - id: Long
+        - quantidade: int
+        --
+        + atualizarQuantidade(quantidade: int): void
+    }
+
+    Buque "1" *-- "1..*" ItemComposicao : composição
+    Arranjo "1" *-- "1..*" ItemComposicao : composição
+    ItemComposicao "0..*" --> "1" Produto : componente
+}
+
+' ==========================================
+' 04 - PERSONALIZAÇÃO
+' ==========================================
+
+package "04 - PERSONALIZAÇÃO" #F9EBD9 {
+
+    class Personalizacao {
+        - id: Long
+        - valorAdicional: BigDecimal
+        --
+        + calcularValorAdicional(): BigDecimal
+        + validar(): boolean
+    }
+
+    class ItemPersonalizacao {
+        - id: Long
+        - quantidade: int
+        - precoUnitario: BigDecimal
+        --
+        + calcularSubtotal(): BigDecimal
+    }
+
+    Personalizacao "1" *-- "1..*" ItemPersonalizacao
+    ItemPersonalizacao "0..*" --> "1" Planta : planta escolhida
+
+    Personalizacao "0..*" --> "0..1" Papel : papel escolhido
+    Personalizacao "0..*" --> "0..1" Laco : laço escolhido
+    Personalizacao "0..*" --> "0..1" Vaso : vaso escolhido
+}
+
+' ==========================================
+' 05 - CARRINHO DE COMPRAS
+' ==========================================
+
+package "05 - CARRINHO DE COMPRAS" #E7EFF3 {
+
+    class Carrinho {
+        - id: Long
+        - dataCriacao: LocalDateTime
+        --
+        + adicionarItem(produto: Produto, quantidade: int): void
+        + removerItem(item: ItemCarrinho): void
+        + atualizarQuantidade(item: ItemCarrinho, quantidade: int): void
+        + calcularTotal(): BigDecimal
+        + limpar(): void
+    }
+
+    class ItemCarrinho {
+        - id: Long
+        - quantidade: int
+        - precoUnitario: BigDecimal
+        --
+        + calcularSubtotal(): BigDecimal
+        + atualizarQuantidade(quantidade: int): void
+    }
+
+    Cliente "1" *-- "0..1" Carrinho : carrinho
+    Carrinho "1" *-- "0..*" ItemCarrinho : itens
+    ItemCarrinho "0..*" --> "1" Produto : produto
+    ItemCarrinho "1" *-- "0..1" Personalizacao : personalização
+}
+
+' ==========================================
+' 06 - PEDIDOS E PAGAMENTOS
+' ==========================================
+
+package "06 - PEDIDOS E PAGAMENTOS" #F3E9EE {
+
+    class Pedido {
+        - id: Long
+        - dataPedido: LocalDateTime
+        - status: StatusPedido
+        - valorTotal: BigDecimal
+        --
+        + finalizar(): void
+        + cancelar(): void
+        + calcularTotal(): BigDecimal
+        + atualizarStatus(status: StatusPedido): void
+    }
+
+    class ItemPedido {
+        - id: Long
+        - quantidade: int
+        - precoUnitario: BigDecimal
+        - subtotal: BigDecimal
+        - descricaoPersonalizacao: String
+        --
+        + calcularSubtotal(): BigDecimal
+    }
+
+    class Pagamento {
+        - id: Long
+        - valor: BigDecimal
+        - metodo: MetodoPagamento
+        - status: StatusPagamento
+        - dataPagamento: LocalDateTime
+        - codigoTransacao: String
+        --
+        + processar(): void
+        + confirmar(): void
+        + estornar(): void
+    }
+
+    enum StatusPedido {
+        AGUARDANDO_PAGAMENTO
+        PAGO
+        EM_PREPARACAO
+        ENVIADO
+        ENTREGUE
+        CANCELADO
+    }
+
+    enum MetodoPagamento {
+        PIX
+        CARTAO_CREDITO
+        CARTAO_DEBITO
+        DINHEIRO
+    }
+
+    enum StatusPagamento {
+        PENDENTE
+        APROVADO
+        RECUSADO
+        ESTORNADO
+    }
+
+    Cliente "1" --> "0..*" Pedido : realiza
+    Endereco "1" <-- "0..*" Pedido : endereço de entrega
+    Pedido "1" *-- "1..*" ItemPedido : itens
+    ItemPedido "0..*" --> "1" Produto : produto
+    Pedido "1" *-- "0..*" Pagamento : pagamentos
+}
+
+@enduml

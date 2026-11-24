@@ -10,24 +10,22 @@ skinparam linetype ortho
 skinparam shadowing false
 skinparam packageStyle rectangle
 skinparam defaultFontName Arial
-
 skinparam entity {
     BorderColor #A65D45
     FontColor #49352D
     BackgroundColor #FFF8F0
 }
-
 skinparam package {
     BorderColor #A65D45
     FontColor #49352D
     BackgroundColor #FFFDFC
 }
 
-' =================================================
-' 1. CLIENTES E ENDEREÇOS
-' =================================================
+' ==========================================
+' 01 - CLIENTES E PERFIL
+' ==========================================
 
-package "01 - CLIENTES E ENDEREÇOS" #F8EDE5 {
+package "01 - CLIENTES E PERFIL" #F8EDE5 {
 
     entity "CLIENTE" as CLIENTE {
         * id : BIGINT <<PK>>
@@ -54,9 +52,9 @@ package "01 - CLIENTES E ENDEREÇOS" #F8EDE5 {
     CLIENTE ||--o{ ENDERECO : possui
 }
 
-' =================================================
-' 2. CATÁLOGO E PRODUTOS
-' =================================================
+' ==========================================
+' 02 - CATÁLOGO E PRODUTOS
+' ==========================================
 
 package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
 
@@ -78,24 +76,10 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         luminosidade : VARCHAR(100)
         cuidados : TEXT
         tipo_planta : VARCHAR(30)
+        possui_flor : BOOLEAN
         cor_flor : VARCHAR(50)
         epoca_floracao : VARCHAR(100)
         tipo_folhagem : VARCHAR(100)
-    }
-
-    entity "FLOR" as FLOR {
-        * produto_id : BIGINT <<PK, FK>>
-        --
-        cor : VARCHAR(50)
-        especie : VARCHAR(100)
-        durabilidade : INTEGER
-    }
-
-    entity "ORNAMENTACAO" as ORNAMENTACAO {
-        * produto_id : BIGINT <<PK, FK>>
-        --
-        tipo : VARCHAR(80)
-        material : VARCHAR(80)
     }
 
     entity "VASO" as VASO {
@@ -112,6 +96,8 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         --
         tamanho : VARCHAR(50)
         estilo : VARCHAR(80)
+        papel_padrao_id : BIGINT <<FK>>
+        laco_padrao_id : BIGINT <<FK>>
     }
 
     entity "ARRANJO" as ARRANJO {
@@ -119,19 +105,40 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         --
         estilo : VARCHAR(80)
         tamanho : VARCHAR(50)
+        vaso_padrao_id : BIGINT <<FK>>
+    }
+
+    entity "PAPEL" as PAPEL {
+        * id : BIGINT <<PK>>
+        --
+        nome : VARCHAR(80)
+        cor : VARCHAR(50)
+        preco_adicional : DECIMAL(10,2)
+        ativo : BOOLEAN
+    }
+
+    entity "LACO" as LACO {
+        * id : BIGINT <<PK>>
+        --
+        material : VARCHAR(80)
+        cor : VARCHAR(50)
+        preco_adicional : DECIMAL(10,2)
+        ativo : BOOLEAN
     }
 
     PRODUTO ||--o| PLANTA : especializa
-    PRODUTO ||--o| FLOR : especializa
-    PRODUTO ||--o| ORNAMENTACAO : especializa
     PRODUTO ||--o| VASO : especializa
     PRODUTO ||--o| BUQUE : especializa
     PRODUTO ||--o| ARRANJO : especializa
+
+    PAPEL ||--o{ BUQUE : papel_padrao
+    LACO ||--o{ BUQUE : laco_padrao
+    VASO |o--o{ ARRANJO : vaso_padrao
 }
 
-' =================================================
-' 3. COMPOSIÇÃO DOS PRODUTOS
-' =================================================
+' ==========================================
+' 03 - COMPOSIÇÃO DOS PRODUTOS
+' ==========================================
 
 package "03 - COMPOSIÇÃO DOS PRODUTOS" #EAF0E5 {
 
@@ -148,11 +155,44 @@ package "03 - COMPOSIÇÃO DOS PRODUTOS" #EAF0E5 {
     PRODUTO ||--o{ ITEM_COMPOSICAO : componente
 }
 
-' =================================================
-' 4. CARRINHO DE COMPRAS
-' =================================================
+' ==========================================
+' 04 - PERSONALIZAÇÃO
+' ==========================================
 
-package "04 - CARRINHO DE COMPRAS" #E7EFF3 {
+package "04 - PERSONALIZAÇÃO" #F9EBD9 {
+
+    entity "PERSONALIZACAO" as PERSONALIZACAO {
+        * id : BIGINT <<PK>>
+        --
+        item_carrinho_id : BIGINT <<FK, UK>>
+        papel_id : BIGINT <<FK>>
+        laco_id : BIGINT <<FK>>
+        vaso_id : BIGINT <<FK>>
+        valor_adicional : DECIMAL(10,2)
+    }
+
+    entity "ITEM_PERSONALIZACAO" as ITEM_PERSONALIZACAO {
+        * id : BIGINT <<PK>>
+        --
+        personalizacao_id : BIGINT <<FK>>
+        planta_id : BIGINT <<FK>>
+        quantidade : INTEGER
+        preco_unitario : DECIMAL(10,2)
+    }
+
+    PAPEL ||--o{ PERSONALIZACAO : escolhido
+    LACO ||--o{ PERSONALIZACAO : escolhido
+    VASO |o--o{ PERSONALIZACAO : opcional
+
+    PERSONALIZACAO ||--|{ ITEM_PERSONALIZACAO : contem
+    PLANTA ||--o{ ITEM_PERSONALIZACAO : selecionada
+}
+
+' ==========================================
+' 05 - CARRINHO DE COMPRAS
+' ==========================================
+
+package "05 - CARRINHO DE COMPRAS" #E7EFF3 {
 
     entity "CARRINHO" as CARRINHO {
         * id : BIGINT <<PK>>
@@ -173,13 +213,14 @@ package "04 - CARRINHO DE COMPRAS" #E7EFF3 {
     CLIENTE ||--o| CARRINHO : possui
     CARRINHO ||--o{ ITEM_CARRINHO : contem
     PRODUTO ||--o{ ITEM_CARRINHO : selecionado
+    ITEM_CARRINHO ||--o| PERSONALIZACAO : recebe
 }
 
-' =================================================
-' 5. PEDIDOS E PAGAMENTOS
-' =================================================
+' ==========================================
+' 06 - PEDIDOS E PAGAMENTOS
+' ==========================================
 
-package "05 - PEDIDOS E PAGAMENTOS" #F3E9EE {
+package "06 - PEDIDOS E PAGAMENTOS" #F3E9EE {
 
     entity "PEDIDO" as PEDIDO {
         * id : BIGINT <<PK>>
@@ -199,6 +240,7 @@ package "05 - PEDIDOS E PAGAMENTOS" #F3E9EE {
         quantidade : INTEGER
         preco_unitario : DECIMAL(10,2)
         subtotal : DECIMAL(10,2)
+        descricao_personalizacao : TEXT
     }
 
     entity "PAGAMENTO" as PAGAMENTO {
