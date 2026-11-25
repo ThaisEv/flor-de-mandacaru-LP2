@@ -22,6 +22,11 @@ public class Planta extends Produto {
         this.tipoFolhagem = tipoFolhagem;
     }
 
+    @Override
+    protected String getPrefixoCodigo() {
+        return "PLT";
+    }
+
     public String getNomeCientifico() {
         return nomeCientifico;
     }

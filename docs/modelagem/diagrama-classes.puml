@@ -72,6 +72,7 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
 
     abstract class Produto {
         - id: Long
+        - codigo: String
         - nome: String
         - descricao: String
         - preco: BigDecimal
@@ -82,6 +83,16 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         + atualizarEstoque(quantidade: int): void
         + ativar(): void
         + desativar(): void
+        + adicionarImagem(imagem: Imagem): void
+        + removerImagem(imagem: Imagem): boolean
+        + getImagens(): List<Imagem>
+        + getImagensPorFinalidade(finalidade: FinalidadeImagem): List<Imagem>
+        + getImagemPrincipal(): Optional<Imagem>
+        + getImagemIcone(): Optional<Imagem>
+        + getImagemComposicao(): Optional<Imagem>
+        + getImagemEditorial(): Optional<Imagem>
+        + getImagensGaleria(): List<Imagem>
+        + definirImagemPrincipal(imagem: Imagem): void
     }
 
     class Planta {
@@ -123,18 +134,59 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
 
     class Papel {
         - id: Long
+        - codigo: String
         - nome: String
         - cor: String
         - precoAdicional: BigDecimal
         - ativo: boolean
+        --
+        + adicionarImagem(imagem: Imagem): void
+        + removerImagem(imagem: Imagem): boolean
+        + getImagens(): List<Imagem>
+        + getImagensPorFinalidade(finalidade: FinalidadeImagem): List<Imagem>
+        + getImagemPrincipal(): Optional<Imagem>
+        + getImagemIcone(): Optional<Imagem>
+        + definirImagemPrincipal(imagem: Imagem): void
     }
 
     class Laco {
         - id: Long
+        - codigo: String
         - material: String
         - cor: String
         - precoAdicional: BigDecimal
         - ativo: boolean
+        --
+        + adicionarImagem(imagem: Imagem): void
+        + removerImagem(imagem: Imagem): boolean
+        + getImagens(): List<Imagem>
+        + getImagensPorFinalidade(finalidade: FinalidadeImagem): List<Imagem>
+        + getImagemPrincipal(): Optional<Imagem>
+        + getImagemIcone(): Optional<Imagem>
+        + definirImagemPrincipal(imagem: Imagem): void
+    }
+
+    interface ImagemAssociavel
+
+    class Imagem {
+        - id: Long
+        - codigo: String
+        - nomeArquivo: String
+        - caminho: String
+        - descricao: String
+        - finalidade: FinalidadeImagem
+        - principal: boolean
+        - ordem: int
+        --
+        + gerarCodigo(codigoProprietario: String, finalidade: FinalidadeImagem, sequencial: Integer): String
+        + getFormato(): String
+    }
+
+    enum FinalidadeImagem {
+        ICONE (ICO)
+        COMPOSICAO (CMP)
+        EDITORIAL (EDI)
+        GALERIA (GAL)
     }
 
     interface Componivel {
@@ -147,6 +199,13 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
     Produto <|-- Vaso
     Produto <|-- Buque
     Produto <|-- Arranjo
+
+    ImagemAssociavel <|.. Produto
+    ImagemAssociavel <|.. Papel
+    ImagemAssociavel <|.. Laco
+    Produto "1" *-- "0..*" Imagem : imagens
+    Papel "1" *-- "0..*" Imagem : imagens
+    Laco "1" *-- "0..*" Imagem : imagens
 
     Componivel <|.. Buque
     Componivel <|.. Arranjo
@@ -306,5 +365,15 @@ package "06 - PEDIDOS E PAGAMENTOS" #F3E9EE {
     ItemPedido "0..*" --> "1" Produto : produto
     Pedido "1" *-- "0..*" Pagamento : pagamentos
 }
+
+note right of Imagem
+    Cada imagem pertence a exatamente um proprietário:
+    Produto, Papel ou Laco.
+    codigo da imagem não é o id do banco.
+    caminho é relativo e aponta para a pasta;
+    formato é derivado da extensão do nomeArquivo.
+    No máximo uma imagem principal por proprietário.
+    Imagens de mesma finalidade recebem sequencial.
+end note
 
 @enduml

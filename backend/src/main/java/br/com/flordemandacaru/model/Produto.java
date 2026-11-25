@@ -2,14 +2,19 @@ package br.com.flordemandacaru.model;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import java.util.List;
+import java.util.Optional;
+import br.com.flordemandacaru.enums.FinalidadeImagem;
 
-public abstract class Produto {
+public abstract class Produto implements ImagemAssociavel {
     private Long id;
+    private String codigo;
     private String nome;
     private String descricao;
     private BigDecimal preco;
     private int quantidadeEstoque;
     private boolean ativo = true;
+    private final ColecaoImagens imagens = new ColecaoImagens();
 
     protected Produto(String nome, String descricao, BigDecimal preco, int quantidadeEstoque) {
         this.nome = textoObrigatorio(nome, "nome");
@@ -22,6 +27,59 @@ public abstract class Produto {
         if (valor == null || valor.isBlank())
             throw new IllegalArgumentException(campo + " é obrigatório");
         return valor.trim();
+    }
+
+    protected abstract String getPrefixoCodigo();
+
+    public String getCodigo() {
+        return codigo;
+    }
+
+    public void setCodigo(String codigo) {
+        String validado = CodigoCatalogo.validar(codigo, getPrefixoCodigo());
+        if (this.codigo != null && !this.codigo.equals(validado))
+            throw new IllegalStateException("o código do produto é estável e não pode ser alterado");
+        this.codigo = validado;
+    }
+
+    public void adicionarImagem(Imagem imagem) {
+        imagens.adicionar(this, codigo, imagem);
+    }
+
+    public boolean removerImagem(Imagem imagem) {
+        return imagens.remover(this, imagem);
+    }
+
+    public List<Imagem> getImagens() {
+        return imagens.todas();
+    }
+
+    public List<Imagem> getImagensPorFinalidade(FinalidadeImagem finalidade) {
+        return imagens.porFinalidade(finalidade);
+    }
+
+    public Optional<Imagem> getImagemPrincipal() {
+        return imagens.principal();
+    }
+
+    public Optional<Imagem> getImagemIcone() {
+        return imagens.primeira(FinalidadeImagem.ICONE);
+    }
+
+    public Optional<Imagem> getImagemComposicao() {
+        return imagens.primeira(FinalidadeImagem.COMPOSICAO);
+    }
+
+    public Optional<Imagem> getImagemEditorial() {
+        return imagens.primeira(FinalidadeImagem.EDITORIAL);
+    }
+
+    public List<Imagem> getImagensGaleria() {
+        return imagens.porFinalidade(FinalidadeImagem.GALERIA);
+    }
+
+    public void definirImagemPrincipal(Imagem imagem) {
+        imagens.definirPrincipal(this, imagem);
     }
 
     public void atualizarPreco(BigDecimal preco) {

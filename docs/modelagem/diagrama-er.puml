@@ -61,6 +61,7 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
     entity "PRODUTO" as PRODUTO {
         * id : BIGINT <<PK>>
         --
+        codigo : VARCHAR(20) <<NN, UK>>
         nome : VARCHAR(120)
         descricao : TEXT
         preco : DECIMAL(10,2)
@@ -111,6 +112,7 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
     entity "PAPEL" as PAPEL {
         * id : BIGINT <<PK>>
         --
+        codigo : VARCHAR(20) <<NN, UK>>
         nome : VARCHAR(80)
         cor : VARCHAR(50)
         preco_adicional : DECIMAL(10,2)
@@ -120,10 +122,27 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
     entity "LACO" as LACO {
         * id : BIGINT <<PK>>
         --
+        codigo : VARCHAR(20) <<NN, UK>>
         material : VARCHAR(80)
         cor : VARCHAR(50)
         preco_adicional : DECIMAL(10,2)
         ativo : BOOLEAN
+    }
+
+    entity "IMAGEM" as IMAGEM {
+        * id : BIGINT <<PK>>
+        --
+        codigo : VARCHAR(40) <<NN, UK>>
+        produto_id : BIGINT <<FK, NULL>>
+        papel_id : BIGINT <<FK, NULL>>
+        laco_id : BIGINT <<FK, NULL>>
+        nome_arquivo : VARCHAR(255) <<NN>>
+        caminho : VARCHAR(500) <<NN>>
+        finalidade : VARCHAR(3) <<NN>>
+        descricao : VARCHAR(255) <<NN>>
+        principal : BOOLEAN <<NN>>
+        formato : VARCHAR(5) <<DERIVADO>>
+        ordem : INTEGER <<NN>>
     }
 
     PRODUTO ||--o| PLANTA : especializa
@@ -134,6 +153,19 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
     PAPEL ||--o{ BUQUE : papel_padrao
     LACO ||--o{ BUQUE : laco_padrao
     VASO |o--o{ ARRANJO : vaso_padrao
+    PRODUTO ||--o{ IMAGEM : imagens
+    PAPEL ||--o{ IMAGEM : imagens
+    LACO ||--o{ IMAGEM : imagens
+
+    note right of IMAGEM
+        CHECK: exatamente uma de produto_id, papel_id ou laco_id
+        deve ser preenchida; todas as colunas têm FK válida.
+        No máximo uma imagem principal por proprietário
+        (índices únicos parciais por FK).
+        formato é derivado da extensão de nome_arquivo.
+        caminho é relativo e identifica a pasta; nome_arquivo
+        identifica o arquivo dentro dela.
+    end note
 }
 
 ' ==========================================

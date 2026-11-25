@@ -24,6 +24,11 @@ public class Buque extends Produto implements Componivel {
     }
 
     @Override
+    protected String getPrefixoCodigo() {
+        return "BUQ";
+    }
+
+    @Override
     public void adicionarComponente(Produto p, int qtd) {
         if (p == this)
             throw new IllegalArgumentException("produto não pode compor a si mesmo");

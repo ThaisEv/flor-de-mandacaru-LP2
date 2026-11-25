@@ -15,6 +15,11 @@ public class Vaso extends Produto {
         this.cor = textoObrigatorio(cor, "cor");
     }
 
+    @Override
+    protected String getPrefixoCodigo() {
+        return "VAS";
+    }
+
     private static BigDecimal dimensao(BigDecimal n) {
         if (n == null || n.signum() <= 0)
             throw new IllegalArgumentException("dimensão deve ser positiva");
