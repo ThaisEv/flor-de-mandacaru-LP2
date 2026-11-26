@@ -101,7 +101,7 @@ class ImagemTest {
     void codigosDeProdutosDeCategoriasDiferentesGeramImagensDistintas() {
         Planta rosa = planta("PLT-001");
         Vaso vaso = new Vaso("Vaso de barro", "Vaso artesanal", BigDecimal.TEN, 3,
-                "barro", BigDecimal.TEN, BigDecimal.TEN, "terracota");
+                "barro", BigDecimal.TEN, BigDecimal.TEN);
         vaso.setCodigo("VAS-001");
         Imagem imagemPlanta = imagem("PLT-001", FinalidadeImagem.ICONE, null, false, 0);
         Imagem imagemVaso = imagem("VAS-001", FinalidadeImagem.ICONE, null, false, 0);
@@ -114,12 +114,12 @@ class ImagemTest {
 
     @Test
     void buqueArranjoPapelELacoTambemPossuemImagens() {
-        Papel papel = new Papel("Kraft", "natural", BigDecimal.ZERO);
+        Papel papel = new Papel("Kraft", BigDecimal.ZERO);
         papel.setCodigo("PAP-001");
-        Laco laco = new Laco("Cetim", "verde", BigDecimal.ZERO);
+        Laco laco = new Laco("Cetim", BigDecimal.ZERO);
         laco.setCodigo("LAC-001");
         Buque buque = new Buque("Buquê", "Flores do campo", BigDecimal.TEN, 2,
-                "médio", "campestre", papel, laco);
+                "campestre", papel, laco);
         buque.setCodigo("BUQ-001");
         Arranjo arranjo = new Arranjo("Arranjo", "Rosas brancas", BigDecimal.TEN, 2,
                 "clássico", "pequeno", null);
@@ -141,7 +141,7 @@ class ImagemTest {
     private static Planta planta(String codigo) {
         Planta planta = new Planta("Rosa branca", "Rosa de corte", BigDecimal.TEN, 5,
                 "Rosa alba", "moderada", "sol", "regar", "flor", true,
-                "branca", "primavera", "perene");
+                "primavera", "perene");
         planta.setCodigo(codigo);
         return planta;
     }

@@ -6,11 +6,21 @@ import java.util.Objects;
 public class ItemPersonalizacao {
     private Long id;
     private final Planta planta;
+    private final PosicaoBuque posicao;
     private int quantidade;
     private BigDecimal precoUnitario;
 
     public ItemPersonalizacao(Planta planta, int quantidade, BigDecimal precoUnitario) {
+        this(planta, null, quantidade, precoUnitario);
+    }
+
+    public ItemPersonalizacao(Planta planta, PosicaoBuque posicao, BigDecimal precoUnitario) {
+        this(planta, Objects.requireNonNull(posicao, "posição obrigatória"), 1, precoUnitario);
+    }
+
+    private ItemPersonalizacao(Planta planta, PosicaoBuque posicao, int quantidade, BigDecimal precoUnitario) {
         this.planta = Objects.requireNonNull(planta, "planta obrigatória");
+        this.posicao = posicao;
         atualizarQuantidade(quantidade);
         atualizarPrecoUnitario(precoUnitario);
     }
@@ -22,6 +32,8 @@ public class ItemPersonalizacao {
     public void atualizarQuantidade(int v) {
         if (v <= 0)
             throw new IllegalArgumentException("quantidade deve ser positiva");
+        if (posicao != null && v != 1)
+            throw new IllegalArgumentException("uma posição de buquê representa exatamente uma flor");
         planta.validarDisponibilidade(v);
         quantidade = v;
     }
@@ -36,6 +48,10 @@ public class ItemPersonalizacao {
 
     public Planta getPlanta() {
         return planta;
+    }
+
+    public PosicaoBuque getPosicao() {
+        return posicao;
     }
 
     public int getQuantidade() {

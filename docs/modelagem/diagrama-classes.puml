@@ -102,7 +102,6 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         - cuidados: String
         - tipoPlanta: String
         - possuiFlor: boolean
-        - corFlor: String
         - epocaFloracao: String
         - tipoFolhagem: String
     }
@@ -111,11 +110,9 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         - material: String
         - altura: BigDecimal
         - largura: BigDecimal
-        - cor: String
     }
 
     class Buque {
-        - tamanho: String
         - estilo: String
         --
         + adicionarComponente(produto: Produto, quantidade: int): void
@@ -136,7 +133,6 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         - id: Long
         - codigo: String
         - nome: String
-        - cor: String
         - precoAdicional: BigDecimal
         - ativo: boolean
         --
@@ -153,7 +149,6 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         - id: Long
         - codigo: String
         - material: String
-        - cor: String
         - precoAdicional: BigDecimal
         - ativo: boolean
         --
@@ -164,6 +159,28 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         + getImagemPrincipal(): Optional<Imagem>
         + getImagemIcone(): Optional<Imagem>
         + definirImagemPrincipal(imagem: Imagem): void
+    }
+
+    class Cor {
+        - id: Long
+        - nome: String
+        - codigoHexadecimal: String
+        - descricao: String
+    }
+
+    class TamanhoBuque {
+        - id: Long
+        - codigo: String
+        - quantidadeFlores: int
+        --
+        + getPosicoes(): List<PosicaoBuque>
+    }
+
+    class PosicaoBuque {
+        - id: Long
+        - ordemSelecao: int
+        - linha: int
+        - coluna: int
     }
 
     interface ImagemAssociavel
@@ -207,12 +224,31 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
     Papel "1" *-- "0..*" Imagem : imagens
     Laco "1" *-- "0..*" Imagem : imagens
 
+    Produto "0..*" -- "0..*" Cor : cores
+    Papel "0..*" -- "0..*" Cor : cores
+    Laco "0..*" -- "0..*" Cor : cores
+
+    TamanhoBuque "1" *-- "1..20" PosicaoBuque : grade configurada
+
     Componivel <|.. Buque
     Componivel <|.. Arranjo
 
     Buque "0..*" --> "1" Papel : papel padrão
     Buque "0..*" --> "1" Laco : laço padrão
     Arranjo "0..*" --> "0..1" Vaso : vaso padrão
+
+    note right of Cor
+        Cores são independentes de produtos e materiais.
+        Toda especialização de Produto herda a associação.
+        Papel e Laco mantêm associações próprias.
+    end note
+
+    note right of PosicaoBuque
+        ordemSelecao indica quando preencher a posição;
+        linha e coluna indicam sua localização visual.
+        Cada tamanho possui tantas posições quanto
+        quantidadeFlores.
+    end note
 }
 
 ' ==========================================
@@ -251,16 +287,24 @@ package "04 - PERSONALIZAÇÃO" #F9EBD9 {
         - id: Long
         - quantidade: int
         - precoUnitario: BigDecimal
-        --
-        + calcularSubtotal(): BigDecimal
     }
 
-    Personalizacao "1" *-- "1..*" ItemPersonalizacao
-    ItemPersonalizacao "0..*" --> "1" Planta : planta escolhida
+    Personalizacao "1" *-- "0..*" ItemPersonalizacao : flores em posições
+    ItemPersonalizacao "0..*" --> "1" Planta : flor escolhida
+    ItemPersonalizacao "0..*" --> "0..1" PosicaoBuque : posição escolhida
+    Personalizacao "0..*" --> "0..1" TamanhoBuque : tamanho escolhido
 
     Personalizacao "0..*" --> "0..1" Papel : papel escolhido
     Personalizacao "0..*" --> "0..1" Laco : laço escolhido
     Personalizacao "0..*" --> "0..1" Vaso : vaso escolhido
+
+    note right of ItemPersonalizacao
+        Para buquê: quantidade=1, tamanho obrigatório e
+        uma posição distinta por flor. Para arranjo:
+        posição e tamanho ausentes; quantidade pode agrupar
+        plantas iguais. O pedido exige layout completo
+        para buquê personalizado.
+    end note
 }
 
 ' ==========================================
@@ -315,12 +359,48 @@ package "06 - PEDIDOS E PAGAMENTOS" #F3E9EE {
 
     class ItemPedido {
         - id: Long
+        - produtoCodigoSnapshot: String
+        - produtoNomeSnapshot: String
         - quantidade: int
         - precoUnitario: BigDecimal
         - subtotal: BigDecimal
-        - descricaoPersonalizacao: String
         --
         + calcularSubtotal(): BigDecimal
+    }
+
+    class EnderecoPedido {
+        - cep: String
+        - logradouro: String
+        - numero: String
+        - complemento: String
+        - bairro: String
+        - cidade: String
+        - estado: String
+    }
+
+    class PersonalizacaoPedido {
+        - tamanhoCodigoSnapshot: String
+        - quantidadeFloresSnapshot: int
+        - papelCodigoSnapshot: String
+        - papelNomeSnapshot: String
+        - papelPrecoSnapshot: BigDecimal
+        - lacoCodigoSnapshot: String
+        - lacoNomeSnapshot: String
+        - lacoPrecoSnapshot: BigDecimal
+        - vasoCodigoSnapshot: String
+        - vasoNomeSnapshot: String
+        - vasoPrecoSnapshot: BigDecimal
+        - valorAdicionalSnapshot: BigDecimal
+    }
+
+    class FlorPedido {
+        - plantaCodigoSnapshot: String
+        - plantaNomeSnapshot: String
+        - quantidade: int
+        - ordemSelecao: Integer
+        - linha: Integer
+        - coluna: Integer
+        - precoUnitarioSnapshot: BigDecimal
     }
 
     class Pagamento {
@@ -360,10 +440,28 @@ package "06 - PEDIDOS E PAGAMENTOS" #F3E9EE {
     }
 
     Cliente "1" --> "0..*" Pedido : realiza
-    Endereco "1" <-- "0..*" Pedido : endereço de entrega
+    Pedido "1" *-- "1" EnderecoPedido : endereço congelado
+    EnderecoPedido "0..*" --> "0..1" Endereco : endereço de origem (opcional)
     Pedido "1" *-- "1..*" ItemPedido : itens
-    ItemPedido "0..*" --> "1" Produto : produto
+    ItemPedido "0..*" --> "0..1" Produto : referência de catálogo
+    ItemPedido "1" *-- "0..1" PersonalizacaoPedido : snapshot
+    PersonalizacaoPedido "1" *-- "0..*" FlorPedido : flores e posições
+    FlorPedido "0..*" --> "0..1" Planta : referência de catálogo
+    FlorPedido "0..*" --> "0..1" PosicaoBuque : referência de posição
+    PersonalizacaoPedido "0..*" --> "0..1" TamanhoBuque : referência de tamanho
+    PersonalizacaoPedido "0..*" --> "0..1" Papel : referência de catálogo
+    PersonalizacaoPedido "0..*" --> "0..1" Laco : referência de catálogo
+    PersonalizacaoPedido "0..*" --> "0..1" Vaso : referência de catálogo
     Pedido "1" *-- "0..*" Pagamento : pagamentos
+
+    note right of PersonalizacaoPedido
+        Os valores copiados são a fonte do histórico;
+        referências ao catálogo servem somente para
+        consulta quando os registros ainda existem.
+        FlorPedido preserva planta, quantidade, posição,
+        ordem e preço do instante da compra. A posição é
+        obrigatória para buquê e ausente para arranjo.
+    end note
 }
 
 note right of Imagem

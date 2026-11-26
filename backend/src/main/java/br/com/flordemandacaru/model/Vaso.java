@@ -3,16 +3,15 @@ package br.com.flordemandacaru.model;
 import java.math.BigDecimal;
 
 public class Vaso extends Produto {
-    private String material, cor;
+    private String material;
     private BigDecimal altura, largura;
 
     public Vaso(String nome, String descricao, BigDecimal preco, int estoque, String material,
-            BigDecimal altura, BigDecimal largura, String cor) {
+            BigDecimal altura, BigDecimal largura) {
         super(nome, descricao, preco, estoque);
         this.material = textoObrigatorio(material, "material");
         this.altura = dimensao(altura);
         this.largura = dimensao(largura);
-        this.cor = textoObrigatorio(cor, "cor");
     }
 
     @Override
@@ -50,11 +49,4 @@ public class Vaso extends Produto {
         largura = dimensao(v);
     }
 
-    public String getCor() {
-        return cor;
-    }
-
-    public void setCor(String v) {
-        cor = textoObrigatorio(v, "cor");
-    }
 }

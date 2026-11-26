@@ -5,11 +5,11 @@ import java.math.BigDecimal;
 public class Planta extends Produto {
     private String nomeCientifico, necessidadeAgua, luminosidade, cuidados, tipoPlanta;
     private boolean possuiFlor;
-    private String corFlor, epocaFloracao, tipoFolhagem;
+    private String epocaFloracao, tipoFolhagem;
 
     public Planta(String nome, String descricao, BigDecimal preco, int estoque, String nomeCientifico,
             String necessidadeAgua, String luminosidade, String cuidados, String tipoPlanta,
-            boolean possuiFlor, String corFlor, String epocaFloracao, String tipoFolhagem) {
+            boolean possuiFlor, String epocaFloracao, String tipoFolhagem) {
         super(nome, descricao, preco, estoque);
         this.nomeCientifico = nomeCientifico;
         this.necessidadeAgua = necessidadeAgua;
@@ -17,7 +17,6 @@ public class Planta extends Produto {
         this.cuidados = cuidados;
         this.tipoPlanta = tipoPlanta;
         this.possuiFlor = possuiFlor;
-        this.corFlor = possuiFlor ? corFlor : null;
         this.epocaFloracao = possuiFlor ? epocaFloracao : null;
         this.tipoFolhagem = tipoFolhagem;
     }
@@ -71,21 +70,19 @@ public class Planta extends Produto {
         return possuiFlor;
     }
 
+    @Override
+    public void adicionarCor(Cor cor) {
+        if (!possuiFlor)
+            throw new IllegalStateException("planta sem flor não pode ter cores de flor associadas");
+        super.adicionarCor(cor);
+    }
+
     public void setPossuiFlor(boolean v) {
         possuiFlor = v;
         if (!v) {
-            corFlor = null;
+            removerTodasCores();
             epocaFloracao = null;
         }
-    }
-
-    public String getCorFlor() {
-        return corFlor;
-    }
-
-    public void setCorFlor(String v) {
-        if (possuiFlor)
-            corFlor = v;
     }
 
     public String getEpocaFloracao() {

@@ -1,4 +1,3 @@
-
 @startuml
 !theme plain
 
@@ -67,6 +66,7 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         preco : DECIMAL(10,2)
         quantidade_estoque : INTEGER
         ativo : BOOLEAN
+        tipo_produto : VARCHAR(20) <<NN, CHECK>>
     }
 
     entity "PLANTA" as PLANTA {
@@ -78,7 +78,6 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         cuidados : TEXT
         tipo_planta : VARCHAR(30)
         possui_flor : BOOLEAN
-        cor_flor : VARCHAR(50)
         epoca_floracao : VARCHAR(100)
         tipo_folhagem : VARCHAR(100)
     }
@@ -89,13 +88,11 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         material : VARCHAR(80)
         altura : DECIMAL(8,2)
         largura : DECIMAL(8,2)
-        cor : VARCHAR(50)
     }
 
     entity "BUQUE" as BUQUE {
         * produto_id : BIGINT <<PK, FK>>
         --
-        tamanho : VARCHAR(50)
         estilo : VARCHAR(80)
         papel_padrao_id : BIGINT <<FK>>
         laco_padrao_id : BIGINT <<FK>>
@@ -114,7 +111,6 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         --
         codigo : VARCHAR(20) <<NN, UK>>
         nome : VARCHAR(80)
-        cor : VARCHAR(50)
         preco_adicional : DECIMAL(10,2)
         ativo : BOOLEAN
     }
@@ -124,7 +120,6 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
         --
         codigo : VARCHAR(20) <<NN, UK>>
         material : VARCHAR(80)
-        cor : VARCHAR(50)
         preco_adicional : DECIMAL(10,2)
         ativo : BOOLEAN
     }
@@ -154,25 +149,130 @@ package "02 - CATÁLOGO E PRODUTOS" #F1EBDD {
     LACO ||--o{ BUQUE : laco_padrao
     VASO |o--o{ ARRANJO : vaso_padrao
     PRODUTO ||--o{ IMAGEM : imagens
+
+    note right of PRODUTO
+        tipo_produto aceita PLANTA, VASO, BUQUE ou ARRANJO.
+        UNIQUE (id, tipo_produto) dá suporte à FK composta
+        de PRODUTO_COR.
+        A especialização é total e disjunta: cada produto deve
+        ter exatamente o registro do subtipo indicado.
+        Validar o tipo do subtipo e sua existência com trigger
+        de restrição diferido até o fim da transação, ou
+        CHECK/FK composta quando aplicável.
+    end note
     PAPEL ||--o{ IMAGEM : imagens
     LACO ||--o{ IMAGEM : imagens
 
     note right of IMAGEM
         CHECK: exatamente uma de produto_id, papel_id ou laco_id
         deve ser preenchida; todas as colunas têm FK válida.
-        No máximo uma imagem principal por proprietário
-        (índices únicos parciais por FK).
+        No máximo uma imagem principal por proprietário.
         formato é derivado da extensão de nome_arquivo.
         caminho é relativo e identifica a pasta; nome_arquivo
         identifica o arquivo dentro dela.
+        Finalidades: ICO, CMP, EDI e GAL.
     end note
 }
 
 ' ==========================================
-' 03 - COMPOSIÇÃO DOS PRODUTOS
+' 03 - CORES E ASSOCIAÇÕES
 ' ==========================================
 
-package "03 - COMPOSIÇÃO DOS PRODUTOS" #EAF0E5 {
+package "03 - CORES E ASSOCIAÇÕES" #F5EEE4 {
+
+    entity "COR" as COR {
+        * id : BIGINT <<PK>>
+        --
+        nome : VARCHAR(60) <<NN>>
+        codigo_hexadecimal : VARCHAR(9) <<NN>>
+        descricao : VARCHAR(255)
+    }
+
+    entity "PRODUTO_COR" as PRODUTO_COR {
+        * produto_id : BIGINT <<PK, FK>>
+        * cor_id : BIGINT <<PK, FK>>
+        tipo_produto : VARCHAR(20) <<NN, CHECK, FK>>
+    }
+
+    entity "VASO_COR" as VASO_COR {
+        * vaso_id : BIGINT <<PK, FK>>
+        * cor_id : BIGINT <<PK, FK>>
+    }
+
+    entity "PAPEL_COR" as PAPEL_COR {
+        * papel_id : BIGINT <<PK, FK>>
+        * cor_id : BIGINT <<PK, FK>>
+    }
+
+    entity "LACO_COR" as LACO_COR {
+        * laco_id : BIGINT <<PK, FK>>
+        * cor_id : BIGINT <<PK, FK>>
+    }
+
+    PRODUTO ||--o{ PRODUTO_COR : cores de produtos exceto vasos
+    COR ||--o{ PRODUTO_COR : associada
+    VASO ||--o{ VASO_COR : cores do vaso
+    COR ||--o{ VASO_COR : associada
+    PAPEL ||--o{ PAPEL_COR : cores do papel
+    COR ||--o{ PAPEL_COR : associada
+    LACO ||--o{ LACO_COR : cores do laço
+    COR ||--o{ LACO_COR : associada
+
+    note right of PRODUTO_COR
+        Cada tabela associativa tem PK composta
+        pelas duas FKs, impedindo duplicatas.
+        PRODUTO_COR.tipo_produto só aceita PLANTA,
+        BUQUE ou ARRANJO e tem FK composta
+        (produto_id, tipo_produto) para PRODUTO.
+        PRODUTO deve ter UNIQUE(id, tipo_produto).
+        Assim, CHECK + FK impedem associar VASO aqui;
+        vasos usam somente VASO_COR.
+    end note
+}
+
+' ==========================================
+' 04 - TAMANHOS E LAYOUT DE BUQUÊS
+' ==========================================
+
+package "04 - TAMANHOS E LAYOUT DE BUQUÊS" #EAF0E5 {
+
+    entity "TAMANHO_BUQUE" as TAMANHO_BUQUE {
+        * id : BIGINT <<PK>>
+        --
+        codigo : VARCHAR(2) <<NN, UK>>
+        quantidade_flores : INTEGER <<NN>>
+    }
+
+    entity "POSICAO_BUQUE" as POSICAO_BUQUE {
+        * id : BIGINT <<PK>>
+        --
+        tamanho_buque_id : BIGINT <<FK, NN>>
+        ordem_selecao : INTEGER <<NN>>
+        linha : INTEGER <<NN>>
+        coluna : INTEGER <<NN>>
+    }
+
+    TAMANHO_BUQUE ||--|{ POSICAO_BUQUE : define posições
+
+    note right of POSICAO_BUQUE
+        Únicos: (tamanho_buque_id, ordem_selecao)
+        e (tamanho_buque_id, linha, coluna).
+        UNIQUE (id, tamanho_buque_id) permite a FK
+        composta usada para validar o tamanho escolhido.
+        Ordem de seleção e coordenadas são conceitos distintos.
+        Sementes: PP=1, P=5, M=7, G=15, GG=20 posições.
+        Para P: (ordem, linha, coluna) =
+        (1,2,2), (2,2,1), (3,2,3), (4,1,2), (5,3,2).
+        Coordenadas dos demais tamanhos ainda precisam
+        ser definidas pela interface/design.
+    end note
+}
+
+' ==========================================
+' 05 - COMPOSIÇÃO DOS PRODUTOS DO CATÁLOGO
+' ==========================================
+
+package "05 - COMPOSIÇÃO DOS PRODUTOS" #EAF0E5 {
 
     entity "ITEM_COMPOSICAO" as ITEM_COMPOSICAO {
         * id : BIGINT <<PK>>
@@ -182,49 +282,44 @@ package "03 - COMPOSIÇÃO DOS PRODUTOS" #EAF0E5 {
         quantidade : INTEGER
     }
 
-    BUQUE ||--o{ ITEM_COMPOSICAO : possui
-    ARRANJO ||--o{ ITEM_COMPOSICAO : possui
+    PRODUTO ||--o{ ITEM_COMPOSICAO : produto proprietário
     PRODUTO ||--o{ ITEM_COMPOSICAO : componente
+
+    note right of ITEM_COMPOSICAO
+        produto_composicao_id referencia somente PRODUTO.
+        Regra: o proprietário deve ser subtipo BUQUE ou ARRANJO.
+        Validar o subtipo na aplicação ou por trigger.
+        componente_id também referencia PRODUTO.
+    end note
 }
 
 ' ==========================================
-' 04 - PERSONALIZAÇÃO
+' 06 - PERSONALIZAÇÃO E CARRINHO
 ' ==========================================
 
-package "04 - PERSONALIZAÇÃO" #F9EBD9 {
+package "06 - PERSONALIZAÇÃO E CARRINHO" #F9EBD9 {
 
     entity "PERSONALIZACAO" as PERSONALIZACAO {
         * id : BIGINT <<PK>>
         --
         item_carrinho_id : BIGINT <<FK, UK>>
-        papel_id : BIGINT <<FK>>
-        laco_id : BIGINT <<FK>>
-        vaso_id : BIGINT <<FK>>
+        tamanho_buque_id : BIGINT <<FK, NULL>>
+        papel_id : BIGINT <<FK, NULL>>
+        laco_id : BIGINT <<FK, NULL>>
+        vaso_id : BIGINT <<FK, NULL>>
         valor_adicional : DECIMAL(10,2)
     }
 
     entity "ITEM_PERSONALIZACAO" as ITEM_PERSONALIZACAO {
         * id : BIGINT <<PK>>
         --
-        personalizacao_id : BIGINT <<FK>>
-        planta_id : BIGINT <<FK>>
-        quantidade : INTEGER
+        personalizacao_id : BIGINT <<FK, NN>>
+        posicao_buque_id : BIGINT <<FK, NULL>>
+        tamanho_buque_id : BIGINT <<FK, NULL>>
+        planta_id : BIGINT <<FK, NN>>
+        quantidade : INTEGER <<NN>>
         preco_unitario : DECIMAL(10,2)
     }
-
-    PAPEL ||--o{ PERSONALIZACAO : escolhido
-    LACO ||--o{ PERSONALIZACAO : escolhido
-    VASO |o--o{ PERSONALIZACAO : opcional
-
-    PERSONALIZACAO ||--|{ ITEM_PERSONALIZACAO : contem
-    PLANTA ||--o{ ITEM_PERSONALIZACAO : selecionada
-}
-
-' ==========================================
-' 05 - CARRINHO DE COMPRAS
-' ==========================================
-
-package "05 - CARRINHO DE COMPRAS" #E7EFF3 {
 
     entity "CARRINHO" as CARRINHO {
         * id : BIGINT <<PK>>
@@ -242,37 +337,112 @@ package "05 - CARRINHO DE COMPRAS" #E7EFF3 {
         preco_unitario : DECIMAL(10,2)
     }
 
+    TAMANHO_BUQUE |o--o{ PERSONALIZACAO : tamanho escolhido
+    PAPEL |o--o{ PERSONALIZACAO : papel escolhido
+    LACO |o--o{ PERSONALIZACAO : laço escolhido
+    VASO |o--o{ PERSONALIZACAO : vaso opcional
+    PERSONALIZACAO ||--o{ ITEM_PERSONALIZACAO : flores e posições
+    POSICAO_BUQUE ||--o{ ITEM_PERSONALIZACAO : posição escolhida
+    PLANTA ||--o{ ITEM_PERSONALIZACAO : flor escolhida
+
     CLIENTE ||--o| CARRINHO : possui
-    CARRINHO ||--o{ ITEM_CARRINHO : contem
+    CARRINHO ||--o{ ITEM_CARRINHO : contém
     PRODUTO ||--o{ ITEM_CARRINHO : selecionado
     ITEM_CARRINHO ||--o| PERSONALIZACAO : recebe
+
+    note right of ITEM_PERSONALIZACAO
+        Para BUQUE: tamanho obrigatório, quantidade=1 e
+        posição obrigatória. UNIQUE (personalizacao_id,
+        posicao_buque_id) impede preencher a posição duas vezes.
+        tamanho_buque_id é uma coluna-ponte para FKs compostas:
+        (personalizacao_id, tamanho_buque_id) referencia
+        PERSONALIZACAO e (posicao_buque_id, tamanho_buque_id)
+        referencia POSICAO_BUQUE. Ambas as tabelas referenciadas
+        precisam de UNIQUE (id, tamanho_buque_id); um CHECK exige
+        que tamanho_buque_id e posicao_buque_id sejam ambos nulos
+        ou ambos preenchidos. Isso garante que a posição pertença
+        ao tamanho escolhido.
+        Cada posição preenchida referencia uma PLANTA.
+        Para ARRANJO: posição/tamanho ausentes e quantidade
+        pode agrupar plantas iguais. A aplicação valida a regra.
+        O pedido exige todas as posições do buquê preenchidas.
+    end note
 }
 
 ' ==========================================
-' 06 - PEDIDOS E PAGAMENTOS
+' 07 - PEDIDOS, SNAPSHOTS E PAGAMENTOS
 ' ==========================================
 
-package "06 - PEDIDOS E PAGAMENTOS" #F3E9EE {
+package "07 - PEDIDOS E PAGAMENTOS" #F3E9EE {
 
     entity "PEDIDO" as PEDIDO {
         * id : BIGINT <<PK>>
         --
         cliente_id : BIGINT <<FK>>
-        endereco_id : BIGINT <<FK>>
         data_pedido : TIMESTAMP
         status : VARCHAR(30)
         valor_total : DECIMAL(10,2)
+    }
+
+    entity "ENDERECO_PEDIDO" as ENDERECO_PEDIDO {
+        * pedido_id : BIGINT <<PK, FK>>
+        --
+        endereco_id : BIGINT <<FK, NULL>>
+        cep_snapshot : VARCHAR(9)
+        logradouro_snapshot : VARCHAR(150)
+        numero_snapshot : VARCHAR(20)
+        complemento_snapshot : VARCHAR(100)
+        bairro_snapshot : VARCHAR(100)
+        cidade_snapshot : VARCHAR(100)
+        estado_snapshot : CHAR(2)
     }
 
     entity "ITEM_PEDIDO" as ITEM_PEDIDO {
         * id : BIGINT <<PK>>
         --
         pedido_id : BIGINT <<FK>>
-        produto_id : BIGINT <<FK>>
+        produto_id : BIGINT <<FK, NULL>>
+        produto_codigo_snapshot : VARCHAR(20)
+        produto_nome_snapshot : VARCHAR(120)
         quantidade : INTEGER
         preco_unitario : DECIMAL(10,2)
         subtotal : DECIMAL(10,2)
-        descricao_personalizacao : TEXT
+    }
+
+    entity "PERSONALIZACAO_PEDIDO" as PERSONALIZACAO_PEDIDO {
+        * item_pedido_id : BIGINT <<PK, FK>>
+        --
+        tamanho_buque_id : BIGINT <<FK, NULL>>
+        tamanho_codigo_snapshot : VARCHAR(2)
+        quantidade_flores_snapshot : INTEGER
+        papel_id : BIGINT <<FK, NULL>>
+        papel_codigo_snapshot : VARCHAR(20)
+        papel_nome_snapshot : VARCHAR(80)
+        papel_preco_snapshot : DECIMAL(10,2)
+        laco_id : BIGINT <<FK, NULL>>
+        laco_codigo_snapshot : VARCHAR(20)
+        laco_nome_snapshot : VARCHAR(80)
+        laco_preco_snapshot : DECIMAL(10,2)
+        vaso_id : BIGINT <<FK, NULL>>
+        vaso_codigo_snapshot : VARCHAR(20)
+        vaso_nome_snapshot : VARCHAR(120)
+        vaso_preco_snapshot : DECIMAL(10,2)
+        valor_adicional_snapshot : DECIMAL(10,2)
+    }
+
+    entity "FLOR_PEDIDO" as FLOR_PEDIDO {
+        * id : BIGINT <<PK>>
+        --
+        item_pedido_id : BIGINT <<FK, NN>>
+        planta_id : BIGINT <<FK, NULL>>
+        planta_codigo_snapshot : VARCHAR(20)
+        planta_nome_snapshot : VARCHAR(120)
+        posicao_buque_id : BIGINT <<FK, NULL>>
+        quantidade : INTEGER <<NN>>
+        ordem_selecao_snapshot : INTEGER <<NULL>>
+        linha_snapshot : INTEGER <<NULL>>
+        coluna_snapshot : INTEGER <<NULL>>
+        preco_unitario_snapshot : DECIMAL(10,2)
     }
 
     entity "PAGAMENTO" as PAGAMENTO {
@@ -287,10 +457,30 @@ package "06 - PEDIDOS E PAGAMENTOS" #F3E9EE {
     }
 
     CLIENTE ||--o{ PEDIDO : realiza
-    ENDERECO ||--o{ PEDIDO : utilizado
-    PEDIDO ||--|{ ITEM_PEDIDO : contem
-    PRODUTO ||--o{ ITEM_PEDIDO : vendido
+    PEDIDO ||--|| ENDERECO_PEDIDO : endereço congelado
+    ENDERECO |o--o{ ENDERECO_PEDIDO : endereço de origem
+    PEDIDO ||--|{ ITEM_PEDIDO : contém
+    PRODUTO |o--o{ ITEM_PEDIDO : referência de catálogo
+    ITEM_PEDIDO ||--o| PERSONALIZACAO_PEDIDO : snapshot da personalização
+    TAMANHO_BUQUE |o--o{ PERSONALIZACAO_PEDIDO : referência de tamanho
+    PAPEL |o--o{ PERSONALIZACAO_PEDIDO : referência de papel
+    LACO |o--o{ PERSONALIZACAO_PEDIDO : referência de laço
+    VASO |o--o{ PERSONALIZACAO_PEDIDO : referência de vaso
+    ITEM_PEDIDO ||--o{ FLOR_PEDIDO : flores congeladas
+    PLANTA |o--o{ FLOR_PEDIDO : referência de catálogo
+    POSICAO_BUQUE |o--o{ FLOR_PEDIDO : referência de layout
     PEDIDO ||--o{ PAGAMENTO : recebe
+
+    note right of PERSONALIZACAO_PEDIDO
+        Cópia estruturada dos dados de catálogo
+        e dos preços no fechamento do pedido.
+        FLOR_PEDIDO preserva planta, quantidade, ordem e
+        coordenadas, mesmo se o catálogo ou layout mudar.
+        Buquê usa quantidade=1 e posição; arranjo pode
+        agrupar quantidade e não possui posição.
+        FKs de catálogo são referências opcionais;
+        snapshots são a fonte para o histórico.
+    end note
 }
 
 @enduml

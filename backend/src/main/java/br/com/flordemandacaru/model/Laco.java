@@ -3,19 +3,20 @@ package br.com.flordemandacaru.model;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+
 import br.com.flordemandacaru.enums.FinalidadeImagem;
 
 public class Laco implements ImagemAssociavel {
     private Long id;
     private String codigo;
-    private String material, cor;
+    private String material;
     private BigDecimal precoAdicional;
     private boolean ativo = true;
     private final ColecaoImagens imagens = new ColecaoImagens();
+    private final ColecaoCores cores = new ColecaoCores();
 
-    public Laco(String material, String cor, BigDecimal precoAdicional) {
+    public Laco(String material, BigDecimal precoAdicional) {
         this.material = Produto.textoObrigatorio(material, "material");
-        this.cor = Produto.textoObrigatorio(cor, "cor");
         atualizarPrecoAdicional(precoAdicional);
     }
 
@@ -23,6 +24,18 @@ public class Laco implements ImagemAssociavel {
         if (v == null || v.signum() < 0)
             throw new IllegalArgumentException("preço adicional inválido");
         precoAdicional = v;
+    }
+
+    public void adicionarCor(Cor cor) {
+        cores.adicionar(cor);
+    }
+
+    public boolean removerCor(Cor cor) {
+        return cores.remover(cor);
+    }
+
+    public List<Cor> getCores() {
+        return cores.todas();
     }
 
     public String getCodigo() {
@@ -83,14 +96,6 @@ public class Laco implements ImagemAssociavel {
 
     public void setMaterial(String v) {
         material = Produto.textoObrigatorio(v, "material");
-    }
-
-    public String getCor() {
-        return cor;
-    }
-
-    public void setCor(String v) {
-        cor = Produto.textoObrigatorio(v, "cor");
     }
 
     public BigDecimal getPrecoAdicional() {

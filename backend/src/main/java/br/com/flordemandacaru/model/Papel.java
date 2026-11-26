@@ -4,19 +4,20 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.List;
 import java.util.Optional;
+
 import br.com.flordemandacaru.enums.FinalidadeImagem;
 
 public class Papel implements ImagemAssociavel {
     private Long id;
     private String codigo;
-    private String nome, cor;
+    private String nome;
     private BigDecimal precoAdicional;
     private boolean ativo = true;
     private final ColecaoImagens imagens = new ColecaoImagens();
+    private final ColecaoCores cores = new ColecaoCores();
 
-    public Papel(String nome, String cor, BigDecimal precoAdicional) {
+    public Papel(String nome, BigDecimal precoAdicional) {
         this.nome = Produto.textoObrigatorio(nome, "nome");
-        this.cor = Produto.textoObrigatorio(cor, "cor");
         atualizarPrecoAdicional(precoAdicional);
     }
 
@@ -24,6 +25,18 @@ public class Papel implements ImagemAssociavel {
         if (v == null || v.signum() < 0)
             throw new IllegalArgumentException("preço adicional inválido");
         precoAdicional = v;
+    }
+
+    public void adicionarCor(Cor cor) {
+        cores.adicionar(cor);
+    }
+
+    public boolean removerCor(Cor cor) {
+        return cores.remover(cor);
+    }
+
+    public List<Cor> getCores() {
+        return cores.todas();
     }
 
     public String getCodigo() {
@@ -84,14 +97,6 @@ public class Papel implements ImagemAssociavel {
 
     public void setNome(String v) {
         nome = Produto.textoObrigatorio(v, "nome");
-    }
-
-    public String getCor() {
-        return cor;
-    }
-
-    public void setCor(String v) {
-        cor = Produto.textoObrigatorio(v, "cor");
     }
 
     public BigDecimal getPrecoAdicional() {

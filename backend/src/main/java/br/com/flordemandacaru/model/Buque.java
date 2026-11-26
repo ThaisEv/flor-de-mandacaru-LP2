@@ -7,15 +7,14 @@ import java.util.List;
 import java.util.Objects;
 
 public class Buque extends Produto implements Componivel {
-    private String tamanho, estilo;
+    private String estilo;
     private Papel papelPadrao;
     private Laco lacoPadrao;
     private final List<ItemComposicao> composicao = new ArrayList<>();
 
-    public Buque(String nome, String descricao, BigDecimal preco, int estoque, String tamanho, String estilo,
+    public Buque(String nome, String descricao, BigDecimal preco, int estoque, String estilo,
             Papel papel, Laco laco) {
         super(nome, descricao, preco, estoque);
-        this.tamanho = textoObrigatorio(tamanho, "tamanho");
         this.estilo = textoObrigatorio(estilo, "estilo");
         papelPadrao = Objects.requireNonNull(papel, "buquê exige papel padrão");
         lacoPadrao = Objects.requireNonNull(laco, "buquê exige laço padrão");
@@ -51,14 +50,6 @@ public class Buque extends Produto implements Componivel {
     @Override
     public List<ItemComposicao> getComposicao() {
         return List.copyOf(composicao);
-    }
-
-    public String getTamanho() {
-        return tamanho;
-    }
-
-    public void setTamanho(String v) {
-        tamanho = textoObrigatorio(v, "tamanho");
     }
 
     public String getEstilo() {

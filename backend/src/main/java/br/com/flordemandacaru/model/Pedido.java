@@ -10,7 +10,7 @@ import java.util.Objects;
 public class Pedido {
     private Long id;
     private final Cliente cliente;
-    private final Endereco enderecoEntrega;
+    private final EnderecoPedido enderecoEntrega;
     private final LocalDateTime dataPedido = LocalDateTime.now();
     private StatusPedido status = StatusPedido.AGUARDANDO_PAGAMENTO;
     private BigDecimal valorTotal = BigDecimal.ZERO;
@@ -19,9 +19,10 @@ public class Pedido {
 
     public Pedido(Cliente cliente, Endereco enderecoEntrega) {
         this.cliente = Objects.requireNonNull(cliente, "cliente obrigatório");
-        this.enderecoEntrega = Objects.requireNonNull(enderecoEntrega, "endereço de entrega obrigatório");
+        Endereco enderecoValidado = Objects.requireNonNull(enderecoEntrega, "endereço de entrega obrigatório");
         if (!cliente.getEnderecos().contains(enderecoEntrega))
             throw new IllegalArgumentException("endereço não pertence ao cliente");
+        this.enderecoEntrega = new EnderecoPedido(enderecoValidado);
     }
 
     public static Pedido criarDoCarrinho(Carrinho carrinho, Endereco endereco) {
@@ -29,8 +30,11 @@ public class Pedido {
         if (carrinho.getItens().isEmpty())
             throw new IllegalStateException("não é possível criar pedido vazio");
         Pedido p = new Pedido(carrinho.getCliente(), endereco);
-        for (ItemCarrinho i : carrinho.getItens())
+        for (ItemCarrinho i : carrinho.getItens()) {
+            if (i.getPersonalizacao() != null)
+                i.getPersonalizacao().validarParaPedido(i.getProduto());
             p.itens.add(ItemPedido.copiarDe(i));
+        }
         p.calcularTotal();
         return p;
     }
@@ -102,7 +106,7 @@ public class Pedido {
         return cliente;
     }
 
-    public Endereco getEnderecoEntrega() {
+    public EnderecoPedido getEnderecoEntrega() {
         return enderecoEntrega;
     }
 

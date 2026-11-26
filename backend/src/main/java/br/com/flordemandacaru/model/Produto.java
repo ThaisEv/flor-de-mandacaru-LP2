@@ -1,9 +1,10 @@
 package br.com.flordemandacaru.model;
 
 import java.math.BigDecimal;
-import java.util.Objects;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+
 import br.com.flordemandacaru.enums.FinalidadeImagem;
 
 public abstract class Produto implements ImagemAssociavel {
@@ -15,6 +16,7 @@ public abstract class Produto implements ImagemAssociavel {
     private int quantidadeEstoque;
     private boolean ativo = true;
     private final ColecaoImagens imagens = new ColecaoImagens();
+    private final ColecaoCores cores = new ColecaoCores();
 
     protected Produto(String nome, String descricao, BigDecimal preco, int quantidadeEstoque) {
         this.nome = textoObrigatorio(nome, "nome");
@@ -30,6 +32,22 @@ public abstract class Produto implements ImagemAssociavel {
     }
 
     protected abstract String getPrefixoCodigo();
+
+    public void adicionarCor(Cor cor) {
+        cores.adicionar(cor);
+    }
+
+    public boolean removerCor(Cor cor) {
+        return cores.remover(cor);
+    }
+
+    public List<Cor> getCores() {
+        return cores.todas();
+    }
+
+    protected void removerTodasCores() {
+        cores.limpar();
+    }
 
     public String getCodigo() {
         return codigo;
